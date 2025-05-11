@@ -1,5 +1,4 @@
 
-#include <functional>
 #include <iostream>
 
 #include "collections/hash_map.hpp"

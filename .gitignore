@@ -30,6 +30,8 @@
 *.exe
 *.out
 *.app
+vortex
 
 # My configs for clangd LSP
 .clangd
+
