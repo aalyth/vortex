@@ -1,43 +1,40 @@
 
 
-executable := vortex
+TARGET := vortex
 
-include_dir := include
-output_dir := output
-source_dir := src
+INCDIR := include
+OBJDIR := output
+SRCDIR := src
 
-# srcs := $(wildcard *.cpp) $(wildcard */*.cpp) $(wildcard */*/*.cpp)
-srcs := $(shell find $(source_dir) -type f -name '*.cpp') main.cpp
-objs := $(patsubst %.cpp,$(output_dir)/%.o, $(srcs))
+define get_object_name
+$(patsubst %.cpp,$(OBJDIR)/%.o, $1)
+endef
+
+SOURCES := $(shell find $(SRCDIR) -type f \( -name '*.cpp' -o -name '*.hpp' \) ) main.cpp
+OBJECTS := $(foreach source_file, $(SOURCES), $(call get_object_name, $(source_file)))
 
 std := c++20
 flags := -O2 -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion 
 
 CXX := g++
-CXXFLAGS := -I $(include_dir) -std=$(std) $(flags)
+CXXFLAGS := -I $(INCDIR) -std=$(std) $(flags)
 
-VPATH := $(shell find $(source_dir) -type d) .
+VPATH := $(shell find $(SRCDIR) -type d) .
 
-define compile-object
-	@ echo "Compiling $<"
-	@ mkdir -p $(dir $@)
-	@ $(CXX) $(CXXFLAGS) -c $< -o $@
+define compile_object 
+$(call get_object_name, $1): $1
+	@ echo "Compiling $1"
+	@ mkdir -p $(OBJDIR)/$(dir $1)
+	@ $(CXX) $(CXXFLAGS) -c $(1) -o $(call get_object_name, $1) 
 endef
 
 .PHONY: clean
 
-$(executable): $(objs)
-	$(CXX) $(objs) -o $@
+$(TARGET): $(OBJECTS)
+	$(CXX) $(OBJECTS) -o $@
 
-$(output_dir)/%.o: %.cpp 
-	$(compile-object)
-
-$(output_dir)/%.o: */%.cpp 
-	$(compile-object)
-
-$(output_dir)/%.o: src/*/%.cpp 
-	$(compile-object)
+$(foreach source_file, $(SOURCES), $(eval $(call compile_object, $(source_file))))
 
 clean:
-	@ rm $(executable) | true
-	@ rm -rf $(output_dir) | true
+	@ rm $(TARGET) | true
+	@ rm -rf $(OBJDIR) | true

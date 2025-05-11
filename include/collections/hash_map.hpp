@@ -5,9 +5,9 @@
 #include "vector.hpp"
 
 template <typename K, typename V>
-class HashMap {
+class HashMap final {
        private:
-        class SllNode {
+        class SllNode final {
                 friend class Sll;
                 friend class HashMap;
 
@@ -20,7 +20,7 @@ class HashMap {
                 SllNode(K, V);
         };
 
-        class Sll {
+        class Sll final {
                 friend class HashMap;
 
                private:
@@ -29,6 +29,7 @@ class HashMap {
 
                public:
                 Sll() = default;
+                ~Sll();
 
                 void pushBack(K, V);
                 Option<SllNode> popFront();
@@ -73,6 +74,16 @@ void HashMap<K, V>::Sll::pushBack(K key, V value) {
         } else {
                 tail->next = node;
                 tail = node;
+        }
+}
+
+template <typename K, typename V>
+HashMap<K, V>::Sll::~Sll() {
+        SllNode *node = head;
+        while (node != nullptr) {
+                SllNode *next = node->next;
+                delete node;
+                node = next;
         }
 }
 

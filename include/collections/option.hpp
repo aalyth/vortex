@@ -4,7 +4,7 @@
 #include <stdexcept>
 
 template <typename T>
-class Option {
+class Option final {
        private:
         T value;
         bool isSet;
@@ -21,7 +21,7 @@ class Option {
 };
 
 template <typename T>
-class Option<T&> {
+class Option<T&> final {
        private:
         T* value;
 
