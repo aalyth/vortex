@@ -1,13 +1,15 @@
-#ifndef VORTEX_HASH_MAP_H
-#define VORTEX_HASH_MAP_H
+#ifndef VORTEX_HASH_MAP_HPP
+#define VORTEX_HASH_MAP_HPP
+
+#include <functional>
 
 #include "option.hpp"
 #include "vector.hpp"
 
 template <typename K, typename V>
-class HashMap final {
+class HashMap {
        private:
-        class SllNode final {
+        class SllNode {
                 friend class Sll;
                 friend class HashMap;
 
@@ -20,7 +22,7 @@ class HashMap final {
                 SllNode(K, V);
         };
 
-        class Sll final {
+        class Sll {
                 friend class HashMap;
 
                private:
@@ -40,6 +42,8 @@ class HashMap final {
        private:
         static constexpr size_t DEFAULT_BUCKETS = 16;
 
+       private:
+        size_t elementsCount = 0;
         Vector<Sll> buckets;
 
         size_t getBucketIndex(const K &) const;
@@ -50,15 +54,15 @@ class HashMap final {
         HashMap(const HashMap &) = delete;
         HashMap(HashMap &&) = delete;
 
-        // TODO:
-        // ~HashMap();
-
         HashMap &operator=(const HashMap &) = delete;
         HashMap &operator=(HashMap &&) = delete;
 
         void insert(K, V);
         Option<V> get(const K &) const;
         bool contains(const K &) const;
+
+        size_t size() const;
+        bool isEmpty() const;
 };
 
 template <typename K, typename V>
@@ -119,8 +123,7 @@ bool HashMap<K, V>::Sll::contains(const K &key) const {
 
 template <typename K, typename V>
 size_t HashMap<K, V>::getBucketIndex(const K &key) const {
-        // using the memory address as the hash value
-        return ((size_t)&key) % buckets.length();
+        return std::hash<K>()(key) % buckets.length();
 }
 
 template <typename K, typename V>
@@ -139,6 +142,7 @@ HashMap<K, V>::HashMap(size_t bucketsCount) : buckets(bucketsCount) {
 
 template <typename K, typename V>
 void HashMap<K, V>::insert(K key, V value) {
+        elementsCount += 1;
         const size_t index = getBucketIndex(key);
         buckets[index].unwrap().pushBack(key, value);
 }
@@ -152,6 +156,16 @@ Option<V> HashMap<K, V>::get(const K &key) const {
 template <typename K, typename V>
 bool HashMap<K, V>::contains(const K &key) const {
         return get(key).isSome();
+}
+
+template <typename K, typename V>
+size_t HashMap<K, V>::size() const {
+        return elementsCount;
+}
+
+template <typename K, typename V>
+bool HashMap<K, V>::isEmpty() const {
+        return size() == 0;
 }
 
 #endif

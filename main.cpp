@@ -4,8 +4,16 @@
 #include "collections/hash_map.hpp"
 #include "collections/string.h"
 #include "collections/vector.hpp"
+//
+#include "parser.h"
+#include "vm.h"
 
 int main() {
+        Vm vm;
+        Parser parser;
+        const Vector<Instruction*> instructions = parser.parseFile("./examples/fib.vx");
+        vm.execute(instructions);
+
         HashMap<String, int (*)(Vector<String>)> map2;
 
         map2.insert("hello", [](Vector<String> vec) { return 0 + (int)vec.length(); });

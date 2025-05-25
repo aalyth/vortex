@@ -18,6 +18,9 @@ class Option final {
         bool isNone() const;
         bool isSome() const;
         T unwrap();
+        const T unwrap() const;
+        T expect(const char*);
+        const T expect(const char*) const;
 };
 
 template <typename T>
@@ -32,6 +35,9 @@ class Option<T&> final {
         Option& operator=(const Option<T>&);
 
         T& unwrap();
+        const T& unwrap() const;
+        T& expect(const char*);
+        const T& expect(const char*) const;
 };
 
 template <typename T>
@@ -72,6 +78,30 @@ T Option<T>::unwrap() {
 }
 
 template <typename T>
+const T Option<T>::unwrap() const {
+        if (isNone()) {
+                throw std::runtime_error("Unwrapping a None value.");
+        }
+        return value;
+}
+
+template <typename T>
+T Option<T>::expect(const char* msg) {
+        if (isNone()) {
+                throw std::runtime_error(msg);
+        }
+        return value;
+}
+
+template <typename T>
+const T Option<T>::expect(const char* msg) const {
+        if (isNone()) {
+                throw std::runtime_error(msg);
+        }
+        return value;
+}
+
+template <typename T>
 Option<T&>::Option() : value(nullptr) {
 }
 
@@ -83,6 +113,30 @@ template <typename T>
 T& Option<T&>::unwrap() {
         if (value == nullptr) {
                 throw std::runtime_error("Unwrapping a None value.");
+        }
+        return *value;
+}
+
+template <typename T>
+const T& Option<T&>::unwrap() const {
+        if (value == nullptr) {
+                throw std::runtime_error("Unwrapping a None value.");
+        }
+        return *value;
+}
+
+template <typename T>
+T& Option<T&>::expect(const char* msg) {
+        if (value == nullptr) {
+                throw std::runtime_error(msg);
+        }
+        return *value;
+}
+
+template <typename T>
+const T& Option<T&>::expect(const char* msg) const {
+        if (value == nullptr) {
+                throw std::runtime_error(msg);
         }
         return *value;
 }

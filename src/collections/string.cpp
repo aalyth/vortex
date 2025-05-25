@@ -51,7 +51,7 @@ String::String(size_t capacity) : len(0), cap(capacity) {
 
 String::String(const char *_str) : len(strlen(_str)), cap(len) {
         this->str = new char[this->cap + 1];
-        strncpy(this->str, _str, this->len);
+        (void)memcpy(this->str, _str, this->len);
         this->str[this->len] = '\0';
 }
 
@@ -65,6 +65,32 @@ String::String(String &&other) noexcept {
 
 String::~String() {
         free();
+}
+
+String String::fromNumber(size_t number) {
+        String result;
+        size_t reversed = 0;
+        while (number > 0) {
+                reversed = reversed * 10 + (number % 10);
+                number /= 10;
+        }
+        while (reversed > 0) {
+                const char digit = '0' + (char)(reversed % 10);
+                result.append(digit);
+                reversed /= 10;
+        }
+        return result;
+}
+
+String String::readLine(std::istream &in) {
+        String result;
+        char c;
+        in >> c;
+        while (c != '\n') {
+                result.append(c);
+                in >> c;
+        }
+        return result;
 }
 
 String &String::operator=(const String &other) {
@@ -91,6 +117,22 @@ bool String::operator==(const String &other) const {
         return 0 == strncmp(this->str, other.str, minLen);
 }
 
+String String::operator+(char c) const {
+        String result(*this);
+        result.append(c);
+        return result;
+}
+
+String String::operator+(const String &other) const {
+        String result(*this);
+        result.append(other.str);
+        return result;
+}
+
+String operator+(const char *str, const String &appended) {
+        return String(str) + appended;
+}
+
 std::ostream &operator<<(std::ostream &out, const String &str) {
         return out << str.cStr();
 }
@@ -101,4 +143,121 @@ size_t String::length() const {
 
 const char *String::cStr() const {
         return str;
+}
+
+void String::append(char c) {
+        if (len == cap) {
+                cap = (size_t)((double)cap * ALLOCATOR_COEF);
+                realloc(cap);
+        }
+        str[len++] = c;
+        str[len] = '\0';
+}
+
+void String::append(const char *added) {
+        size_t addedLen = strlen(added);
+        if (len + addedLen >= cap) {
+                cap = (size_t)((double)(len + addedLen) * ALLOCATOR_COEF);
+                realloc(cap);
+        }
+        (void)memcpy(str + len, added, addedLen);
+        str[len + addedLen] = '\0';
+        len += addedLen;
+        str[len] = '\0';
+}
+
+bool String::startsWith(char c) const {
+        return str[0] == c;
+}
+
+bool String::endsWith(char c) const {
+        return str[len - 1] == c;
+}
+
+String String::between(const char *start, const char *end) {
+        size_t len = (size_t)(end - start);
+        String result(len);
+        (void)strncpy(result.str, start, len);
+        result.str[len] = '\0';
+        return result;
+}
+
+Vector<String> String::split(char delimiter) const {
+        Vector<String> result;
+        const char *start = str;
+        const char *end = strchr(start, delimiter);
+        while (end != nullptr) {
+                result.pushBack(between(start, end));
+                start = end + 1;
+                end = strchr(start, delimiter);
+        }
+        result.pushBack(between(start, end));
+        return result;
+}
+
+String String::substr(size_t startIdx, size_t endIdx) const {
+        if (startIdx > endIdx || startIdx > len || endIdx > len) {
+                throw std::out_of_range("Invalid substring range");
+        }
+        return between(str + startIdx, str + endIdx);
+}
+
+static bool isDigit(char c) {
+        return c >= '0' && c <= '9';
+}
+
+size_t atou(const char *str) {
+        static const char *NULL_ARG_MSG = "NULL argument to atou()";
+        static const String INVALID_CHAR_MSG = "Invalid character in string for atou(): ";
+
+        if (nullptr == str) {
+                throw std::invalid_argument(NULL_ARG_MSG);
+        }
+
+        size_t result = 0;
+        while (*str != '\0') {
+                const char currentChar = *str;
+                if (!isDigit(currentChar)) {
+                        String msg = INVALID_CHAR_MSG + currentChar;
+                        throw std::invalid_argument(msg.cStr());
+                }
+                result = result * 10 + (size_t)(currentChar - '0');
+                ++str;
+        }
+
+        return result;
+}
+
+int64_t atoi64(const char *str) {
+        static const char *NULL_ARG_MSG = "NULL argument to atoi64()";
+        static const String INVALID_CHAR_MSG = "Invalid character in string for atoi64(): ";
+
+        if (nullptr == str) {
+                throw std::invalid_argument(NULL_ARG_MSG);
+        }
+
+        int64_t result = 0;
+        bool isNegative = false;
+
+        if (*str == '-') {
+                isNegative = true;
+                ++str;
+        } else if (*str == '+') {
+                ++str;
+        }
+
+        while (*str != '\0') {
+                const char currentChar = *str;
+                if (!isDigit(currentChar)) {
+                        const String msg = INVALID_CHAR_MSG + currentChar;
+                        throw std::invalid_argument(msg.cStr());
+                }
+                result = result * 10 + (int64_t)(currentChar - '0');
+                ++str;
+        }
+
+        if (isNegative) {
+                result *= -1;
+        }
+        return result;
 }

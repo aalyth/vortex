@@ -1,0 +1,30 @@
+
+fib:
+        cmp r1 2
+        iflt 
+                jmp fib_base_case
+        jmp fib_default_case
+        
+fib_base_case:
+        mov r0 0
+        return
+
+fib_default_case:
+        push r1
+        sub r1 1
+        call fib
+
+        pop r1
+        push r0
+        sub r1 2
+        call fib
+
+        pop r1
+        add r0 r1
+        return
+
+main:
+        mov r1 35
+        call fib
+        print r0
+
