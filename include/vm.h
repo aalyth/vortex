@@ -3,6 +3,8 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <iostream>
+#include <vector>
 
 #include "collections/vector.hpp"
 #include "value.h"
@@ -18,19 +20,18 @@ class Instruction {
 class Vm final {
        public:
         static constexpr size_t REGISTER_COUNT = 16;
-        static constexpr size_t STACK_FRAMES = 1024;
+        static constexpr size_t STACK_FRAMES = 4096;
 
        private:
         size_t nextInstruction = 0;
         int64_t registers[REGISTER_COUNT];
 
         Vector<int64_t> stack;
-        Vector<size_t> callStack;
 
        public:
         Vm() = default;
 
-        void execute(const Vector<Instruction *> instructions) {
+        void execute(Vector<Instruction *> instructions) {
                 while (nextInstruction < instructions.length()) {
                         const Instruction *instr = instructions[nextInstruction].unwrap();
                         instr->execute(*this);
@@ -43,10 +44,6 @@ class Vm final {
 
         int64_t getRegister(const Register &reg) const {
                 return registers[reg.getReg()];
-        }
-
-        void setRegister(size_t reg, int64_t value) {
-                registers[reg] = value;
         }
 
         void setRegister(const Register &reg, int64_t value) {
@@ -74,11 +71,11 @@ class Vm final {
         }
 
         void pushCallFrame(size_t location) {
-                callStack.pushBack(location);
+                stack.pushBack((int64_t)location);
         }
 
         size_t popCallFrame() {
-                return callStack.popBack().expect(
+                return (size_t)stack.popBack().expect(
                     "Calling VM::popCallFrame() on an empty call stack");
         }
 };

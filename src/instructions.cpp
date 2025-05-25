@@ -5,7 +5,7 @@
 
 Instruction *Mov::factory(AsmVisitor parser) {
         const Register dst = parser.expectRegister();
-        const Value &src = parser.expectLiteral();
+        const Value *src = parser.expectValue();
         parser.expectEndOfArgs();
         return new Mov(dst, src);
 }
@@ -13,6 +13,7 @@ Instruction *Mov::factory(AsmVisitor parser) {
 Instruction *IfStmt::factory(AsmVisitor visitor, bool (*const condition)(int64_t, int64_t)) {
         const Value *v1 = visitor.expectValue();
         const Value *v2 = visitor.expectValue();
+        visitor.expectEndOfArgs();
         return new IfStmt(v1, v2, condition);
 }
 
@@ -108,3 +109,8 @@ Instruction *Pop::factory(AsmVisitor visitor) {
         return new Pop(dst);
 }
 
+Instruction *Print::factory(AsmVisitor visitor) {
+        const Value *value = visitor.expectValue();
+        visitor.expectEndOfArgs();
+        return new Print(value);
+}

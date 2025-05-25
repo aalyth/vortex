@@ -14,7 +14,7 @@ SOURCES := $(shell find $(SRCDIR) -type f \( -name '*.cpp' -o -name '*.hpp' \) )
 OBJECTS := $(foreach source_file, $(SOURCES), $(call get_object_name, $(source_file)))
 
 std := c++20
-flags := -O2 -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion 
+flags := -O2 -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion -Wunused-function
 
 CXX := g++
 CXXFLAGS := -I $(INCDIR) -std=$(std) $(flags)

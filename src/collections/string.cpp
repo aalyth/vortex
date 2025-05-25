@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include <iostream>
 
 void String::realloc(size_t size) {
         this->cap = size;
@@ -26,7 +27,7 @@ void String::copy(const String &other) {
         this->len = other.len;
         this->cap = other.cap;
         this->str = new char[this->cap + 1];
-        strncpy(this->str, other.str, this->len);
+        memcpy(this->str, other.str, this->len);
         this->str[this->len] = '\0';
 }
 
@@ -85,10 +86,10 @@ String String::fromNumber(size_t number) {
 String String::readLine(std::istream &in) {
         String result;
         char c;
-        in >> c;
-        while (c != '\n') {
+        in.get(c);
+        while (c != '\n' && !in.eof()) {
                 result.append(c);
-                in >> c;
+                in.get(c);
         }
         return result;
 }
@@ -174,11 +175,25 @@ bool String::endsWith(char c) const {
         return str[len - 1] == c;
 }
 
+bool String::isEmpty() const {
+        return len == 0;
+}
+
+bool String::all(bool (*predicate)(char)) const {
+        for (size_t i = 0; i < len; ++i) {
+                if (!predicate(str[i])) {
+                        return false;
+                }
+        }
+        return true;
+}
+
 String String::between(const char *start, const char *end) {
         size_t len = (size_t)(end - start);
-        String result(len);
+        String result(len + 1);
         (void)strncpy(result.str, start, len);
         result.str[len] = '\0';
+        result.len = len;
         return result;
 }
 
@@ -187,11 +202,17 @@ Vector<String> String::split(char delimiter) const {
         const char *start = str;
         const char *end = strchr(start, delimiter);
         while (end != nullptr) {
-                result.pushBack(between(start, end));
+                if (start != end) {
+                        String res = between(start, end);
+                        result.pushBack(std::move(res));
+                }
                 start = end + 1;
                 end = strchr(start, delimiter);
         }
-        result.pushBack(between(start, end));
+        if (*start != '\0') {
+                String res = between(start, str + len);
+                result.pushBack(std::move(res));
+        }
         return result;
 }
 
@@ -200,6 +221,22 @@ String String::substr(size_t startIdx, size_t endIdx) const {
                 throw std::out_of_range("Invalid substring range");
         }
         return between(str + startIdx, str + endIdx);
+}
+
+static bool isWhitespace(char c) {
+        return c == ' ' || c == '\t' || c == '\n';
+}
+
+String String::trim() const {
+        size_t start = 0;
+        while (start < len && isWhitespace(str[start])) {
+                ++start;
+        }
+        size_t end = len;
+        while (end > start && isWhitespace(str[end - 1])) {
+                --end;
+        }
+        return substr(start, end);
 }
 
 static bool isDigit(char c) {
@@ -261,3 +298,4 @@ int64_t atoi64(const char *str) {
         }
         return result;
 }
+

@@ -9,18 +9,20 @@
 #include "vm.h"
 
 int main() {
-        Vm vm;
-        Parser parser;
-        const Vector<Instruction*> instructions = parser.parseFile("./examples/fib.vx");
-        vm.execute(instructions);
+        try {
+                Vm vm;
+                Parser parser;
+                Vector<Instruction *> instructions = parser.parseFile("./examples/fib.vx");
 
-        HashMap<String, int (*)(Vector<String>)> map2;
-
-        map2.insert("hello", [](Vector<String> vec) { return 0 + (int)vec.length(); });
-        map2.insert("world", [](Vector<String> vec) { return 1 + (int)vec.length(); });
-
-        std::cout << map2.get("hello").unwrap()(Vector<String>()) << std::endl;
-
-        std::cout << "hello world" << std::endl;
+                size_t entry = parser.getLabels().get("main").expect("No entry point found");
+                vm.setNextInstruction(entry);
+                vm.execute(instructions);
+        } catch (const VortexException &e) {
+                std::cerr << e.what() << std::endl;
+                return 1;
+        } catch (const std::exception &e) {
+                std::cerr << "An unexpected error occurred: " << e.what() << std::endl;
+                return 1;
+        }
         return 0;
 }

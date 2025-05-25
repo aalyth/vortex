@@ -72,4 +72,25 @@ class UnknownLabelException : public VortexException {
         }
 };
 
+class InvalidLabelException : public VortexException {
+       public:
+        InvalidLabelException(const Context &ctx, const String &label)
+            : VortexException(ctx, "Invalid label identifier: " + label) {
+        }
+};
+
+class ConflictingLabelException : public VortexException {
+       public:
+        ConflictingLabelException(const Context &ctx, const String &label)
+            : VortexException(ctx, "Conflicting definition for label: " + label) {
+        }
+};
+
+class UnknownInstructionException : public VortexException {
+       public:
+        UnknownInstructionException(const Context &ctx, const String &instruction)
+            : VortexException(ctx, "Unknown instruction: " + instruction) {
+        }
+};
+
 #endif

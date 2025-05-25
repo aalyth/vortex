@@ -1,12 +1,11 @@
 
 fib:
-        cmp r1 2
-        iflt 
+        iflteq r1 2
                 jmp fib_base_case
         jmp fib_default_case
-        
+
 fib_base_case:
-        mov r0 0
+        mov r0 1
         return
 
 fib_default_case:
@@ -27,4 +26,4 @@ main:
         mov r1 35
         call fib
         print r0
-
+ 

@@ -50,9 +50,13 @@ class String {
 
         bool startsWith(char) const;
         bool endsWith(char) const;
+        bool isEmpty() const;
+        bool all(bool (*)(char)) const;
 
         Vector<String> split(char) const;
         String substr(size_t, size_t) const;
+
+        String trim() const;
 };
 
 namespace std {

@@ -1,6 +1,8 @@
 #ifndef VORTEX_INSTRUCTIONS_H
 #define VORTEX_INSTRUCTIONS_H
 
+#include <iostream>
+
 #include "value.h"
 #include "vm.h"
 
@@ -9,16 +11,16 @@ class AsmVisitor;
 class Mov : public Instruction {
        private:
         const Register dst;
-        const Value &src;
+        const Value *src;
 
-        Mov(const Register &_dst, const Value &_src) : dst(_dst), src(_src) {
+        Mov(const Register &_dst, const Value *_src) : dst(_dst), src(_src) {
         }
 
        public:
         static Instruction *factory(AsmVisitor);
 
         void execute(Vm &vm) const override {
-                vm.setRegister(dst, src.getValue(vm));
+                vm.setRegister(dst, src->getValue(vm));
                 vm.goToNextInstruction();
         }
 };
@@ -86,8 +88,9 @@ class Return : public Instruction {
         static Instruction *factory(AsmVisitor);
 
         void execute(Vm &vm) const override {
-                vm.setNextInstruction(vm.popCallFrame());
-                vm.getNextInstruction();
+                size_t location = vm.popCallFrame();
+                vm.setNextInstruction(location);
+                vm.goToNextInstruction();
         }
 };
 
@@ -152,33 +155,20 @@ class Pop : public Instruction {
         }
 };
 
-/*
-iflt r1 2
-        jmp fib_base_case
-jmp fib_default_case
+class Print : public Instruction {
+       private:
+        const Value *value;
 
-fib_base_case:
-mov r0 0
-return
+        Print(const Value *_value) : value(_value) {
+        }
 
-fib_default_case:
-push r1
-sub r1 1
-call fib
+       public:
+        static Instruction *factory(AsmVisitor);
 
-pop r1
-push r0
-sub r1 2
-call fib
-
-pop r1
-add r0 r1
-return
-
-main:
-mov r1 35
-call fib
-print r0
-*/
+        void execute(Vm &vm) const override {
+                std::cout << value->getValue(vm) << std::endl;
+                vm.goToNextInstruction();
+        }
+};
 
 #endif

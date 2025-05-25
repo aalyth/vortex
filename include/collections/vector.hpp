@@ -50,6 +50,7 @@ class Vector {
         void pushBack(T &);
         void pushBack(T &&);
         Option<T> popBack();
+        Option<T> popFront();
 
         Option<const T &> operator[](size_t) const;
         Option<T &> operator[](size_t);
@@ -190,6 +191,19 @@ Option<T> Vector<T>::popBack() {
         }
         T value = data[--len];
         return value;
+}
+
+template <typename T>
+Option<T> Vector<T>::popFront() {
+        if (len == 0) {
+                return Option<T>();
+        }
+        T result = data[0];
+        for (size_t i = 0; i < len - 1; ++i) {
+                data[i] = data[i + 1];
+        }
+        len -= 1;
+        return result;
 }
 
 template <typename T>

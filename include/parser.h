@@ -1,6 +1,9 @@
 #ifndef VORTEX_PARSER_H
 #define VORTEX_PARSER_H
 
+#include <iostream>
+#include <istream>
+
 #include "collections/hash_map.hpp"
 #include "collections/string.h"
 #include "error.h"
@@ -53,7 +56,7 @@ class AsmVisitor {
         }
 
         Value *expectValue() {
-                const String str = expectArg();
+                const String str = args[readPos].unwrap();
                 if (str.startsWith('r')) {
                         return new Register(expectRegister());
                 } else {
@@ -86,6 +89,11 @@ class Parser {
 
        private:
         static InstructionFactory GLOBAL_INSTRUCTION_FACTORY;
+
+        struct RawInstruction {
+                String name;
+                Vector<String> args;
+        };
 
        private:
         HashMap<String, size_t> labels;
@@ -120,6 +128,8 @@ class Parser {
 
                         GLOBAL_INSTRUCTION_FACTORY.insert("push", Push::factory);
                         GLOBAL_INSTRUCTION_FACTORY.insert("pop", Pop::factory);
+
+                        GLOBAL_INSTRUCTION_FACTORY.insert("print", Print::factory);
                 }
                 return GLOBAL_INSTRUCTION_FACTORY;
         }
@@ -128,8 +138,65 @@ class Parser {
         Parser() : instructionFactory(getGlobalInstructionFactory()) {
         }
 
-        Vector<Instruction *> parseFile(const String &) {
-                return Vector<Instruction *>();
+        static bool isIdentifier(char c) {
+                return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c == '_');
+        }
+
+        Vector<Instruction *> parseFile(const String &filename) {
+                static const String COULD_NOT_OPEN_FILE_MSG = "Could not open file: ";
+
+                std::ifstream sourceCode(filename.cStr());
+                if (!sourceCode.is_open()) {
+                        const String msg = COULD_NOT_OPEN_FILE_MSG + filename;
+                        throw std::runtime_error(msg.cStr());
+                }
+
+                Vector<RawInstruction> rawInstructions;
+                Context ctx = {0, filename};
+                do {
+                        String line = String::readLine(sourceCode).trim();
+                        ctx.ln += 1;
+                        if (line.startsWith(';') || line.isEmpty()) {
+                                continue;
+                        }
+
+                        if (line.endsWith(':')) {
+                                const String label = line.substr(0, line.length() - 1);
+                                if (!label.all(isIdentifier)) {
+                                        throw InvalidLabelException(ctx, label);
+                                }
+                                if (labels.contains(label)) {
+                                        throw ConflictingLabelException(ctx, label);
+                                }
+                                labels.insert(label, rawInstructions.length());
+
+                        } else {
+                                Vector<String> args = line.split(' ');
+                                const String instruction =
+                                    args.popFront().expect("Parsing an empty instruction");
+                                RawInstruction rawInstruction = {instruction, args};
+                                rawInstructions.pushBack(std::move(rawInstruction));
+                        }
+                } while (!sourceCode.eof());
+
+                Vector<Instruction *> instructions;
+                for (auto rawInstruction : rawInstructions) {
+                        const String &name = rawInstruction.name;
+                        Option<InstructionFactoryMethod> factoryMethod =
+                            instructionFactory.get(name);
+                        if (factoryMethod.isNone()) {
+                                throw UnknownInstructionException(ctx, name);
+                        }
+                        instructions.pushBack(
+                            factoryMethod.unwrap()(AsmVisitor(ctx, rawInstruction.args, labels)));
+                }
+
+                sourceCode.close();
+                return instructions;
+        }
+
+        const HashMap<String, size_t> &getLabels() const {
+                return labels;
         }
 };
 
