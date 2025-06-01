@@ -11,7 +11,7 @@ class Vm;
 
 class Value {
        public:
-        virtual int64_t getValue(const Vm &) const = 0;
+        virtual double getValue(const Vm &) const = 0;
         virtual ~Value() = default;
 };
 
@@ -22,10 +22,8 @@ class Register : public Value {
        public:
         Register(const Context &, size_t);
 
-        int64_t getValue(const Vm &) const override;
-        size_t getReg() const {
-                return reg;
-        }
+        double getValue(const Vm &) const override;
+        size_t getReg() const;
 };
 
 class Literal : public Value {
@@ -33,11 +31,8 @@ class Literal : public Value {
         int64_t literal;
 
        public:
-        Literal(int64_t _literal) : literal(_literal) {
-        }
-        int64_t getValue(const Vm &) const override {
-                return literal;
-        }
+        Literal(int64_t);
+        double getValue(const Vm &) const override;
 };
 
 #endif

@@ -11,6 +11,7 @@ fib_base_case:
 fib_default_case:
         push r1
         sub r1 1
+        
         call fib
 
         pop r1
@@ -23,7 +24,11 @@ fib_default_case:
         return
 
 main:
-        mov r1 35
+        mov r1 15
         call fib
+        print r0
+
+        mov r0 5
+        div r0 4
         print r0
  

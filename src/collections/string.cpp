@@ -223,6 +223,14 @@ String String::substr(size_t startIdx, size_t endIdx) const {
         return between(str + startIdx, str + endIdx);
 }
 
+void String::truncateAfter(char c) {
+        char *pos = strchr(str, c);
+        if (pos != nullptr) {
+                *pos = '\0';
+                len = pos - str;
+        }
+}
+
 static bool isWhitespace(char c) {
         return c == ' ' || c == '\t' || c == '\n';
 }
@@ -239,8 +247,20 @@ String String::trim() const {
         return substr(start, end);
 }
 
-static bool isDigit(char c) {
-        return c >= '0' && c <= '9';
+bool isAlpha(char c) {
+        return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+}
+
+bool isNumeric(char c) {
+        return (c >= '0' && c <= '9');
+}
+
+bool isAlphanumeric(char c) {
+        return isAlpha(c) || isNumeric(c);
+}
+
+bool isIdentifier(char c) {
+        return isAlphanumeric(c) || c == '_';
 }
 
 size_t atou(const char *str) {
@@ -254,7 +274,7 @@ size_t atou(const char *str) {
         size_t result = 0;
         while (*str != '\0') {
                 const char currentChar = *str;
-                if (!isDigit(currentChar)) {
+                if (!isNumeric(currentChar)) {
                         String msg = INVALID_CHAR_MSG + currentChar;
                         throw std::invalid_argument(msg.cStr());
                 }
@@ -279,13 +299,11 @@ int64_t atoi64(const char *str) {
         if (*str == '-') {
                 isNegative = true;
                 ++str;
-        } else if (*str == '+') {
-                ++str;
         }
 
         while (*str != '\0') {
                 const char currentChar = *str;
-                if (!isDigit(currentChar)) {
+                if (!isNumeric(currentChar)) {
                         const String msg = INVALID_CHAR_MSG + currentChar;
                         throw std::invalid_argument(msg.cStr());
                 }

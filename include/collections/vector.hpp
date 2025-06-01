@@ -5,8 +5,36 @@
 #include <cstddef>
 
 #include "option.hpp"
-#include "utils.hpp"
 
+template <typename T>
+static void memclone(T *dst, const T *src, size_t len) {
+        if (nullptr == dst || nullptr == src || len == 0) {
+                return;
+        }
+        for (size_t i = 0; i < len; ++i) {
+                dst[i] = src[i];
+        }
+}
+
+template <typename T>
+static void memmove(T *dst, const T *src, size_t len) {
+        if (nullptr == dst || nullptr == src || len == 0) {
+                return;
+        }
+        for (size_t i = 0; i < len; ++i) {
+                dst[i] = std::move(src[i]);
+        }
+}
+
+/// Implementation of a dynamic array with automatic resizing and memory
+/// management.
+///
+/// The reason that the copy constructor and the operator= are deleted is due to
+/// using standard templates compared to type-bounded ones, which require the
+/// type to implement a custom `Copyable` "interface" (abstract class). Such
+/// better approach is not applied, since features such as `concepts` and
+/// bounded polymorphism could be considered outside the scope of the university
+/// class.
 template <typename T>
 class Vector {
        private:
@@ -30,8 +58,8 @@ class Vector {
         size_t len;
         size_t cap;
 
+        void clone(const Vector &);
         void realloc(size_t);
-        void copy(const Vector &);
         void free();
         void move(Vector &&) noexcept;
 
@@ -80,22 +108,24 @@ Vector<T>::Iterator &Vector<T>::Iterator::operator++() {
 }
 
 template <typename T>
+void Vector<T>::clone(const Vector<T> &other) {
+        this->cap = other.cap;
+        this->len = other.len;
+        this->data = new T[this->cap];
+        memclone(this->data, other.data, this->len);
+}
+
+template <typename T>
 void Vector<T>::realloc(size_t newCapacity) {
         cap = newCapacity;
         len = std::min(len, cap);
 
         T *newData = new T[cap];
-        memtransfer(newData, data, len);
+        for (size_t i = 0; i < len; ++i) {
+                newData[i] = std::move(data[i]);
+        }
         delete[] data;
         data = newData;
-}
-
-template <typename T>
-void Vector<T>::copy(const Vector<T> &other) {
-        this->len = other.len;
-        this->cap = other.cap;
-        this->data = new T[this->cap];
-        memtransfer(this->data, other.data, this->len);
 }
 
 template <typename T>
@@ -125,9 +155,10 @@ template <typename T>
 Vector<T>::Vector(size_t capacity) : len(0), cap(capacity) {
         this->data = new T[this->cap];
 }
+
 template <typename T>
 Vector<T>::Vector(const Vector &other) {
-        copy(other);
+        clone(other);
 }
 
 template <typename T>
@@ -144,7 +175,7 @@ template <typename T>
 Vector<T> &Vector<T>::operator=(const Vector<T> &other) {
         if (this != &other) {
                 free();
-                copy(other);
+                clone(other);
         }
         return *this;
 }

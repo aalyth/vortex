@@ -57,6 +57,8 @@ class String {
         String substr(size_t, size_t) const;
 
         String trim() const;
+
+        void truncateAfter(char);
 };
 
 namespace std {
@@ -75,6 +77,11 @@ struct hash<String> {
 
 String operator+(const char *, const String &);
 std::ostream &operator<<(std::ostream &, const String &);
+
+bool isAlpha(char);
+bool isNumeric(char);
+bool isAlphanumeric(char);
+bool isIdentifier(char);
 
 size_t atou(const char *);
 int64_t atoi64(const char *);

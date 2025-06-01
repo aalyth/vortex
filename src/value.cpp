@@ -9,6 +9,16 @@ Register::Register(const Context &ctx, size_t _reg) : reg(_reg) {
         }
 }
 
-int64_t Register::getValue(const Vm &vm) const {
-        return vm.getRegister(reg);
+double Register::getValue(const Vm &vm) const {
+        return vm.getRegister(*this);
+}
+
+size_t Register::getReg() const {
+        return reg;
+}
+
+Literal::Literal(int64_t _literal) : literal(_literal) {
+}
+double Literal::getValue(const Vm &) const {
+        return literal;
 }

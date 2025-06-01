@@ -46,16 +46,18 @@ class HashMap {
         size_t elementsCount = 0;
         Vector<Sll> buckets;
 
+        void free();
+        void move(HashMap &&) noexcept;
         size_t getBucketIndex(const K &) const;
 
        public:
         HashMap();
         HashMap(size_t);
         HashMap(const HashMap &) = delete;
-        HashMap(HashMap &&) = delete;
+        HashMap(HashMap &&) noexcept;
 
         HashMap &operator=(const HashMap &) = delete;
-        HashMap &operator=(HashMap &&) = delete;
+        HashMap &operator=(HashMap &&) noexcept;
 
         void insert(K, V);
         Option<V> get(const K &) const;
@@ -122,6 +124,19 @@ bool HashMap<K, V>::Sll::contains(const K &key) const {
 }
 
 template <typename K, typename V>
+void HashMap<K, V>::free() {
+        elementsCount = 0;
+        buckets.~Vector();
+}
+
+template <typename K, typename V>
+void HashMap<K, V>::move(HashMap<K, V> &&other) noexcept {
+        this->elementsCount = other.elementsCount;
+        this->buckets = std::move(other.buckets);
+        other.elementsCount = 0;
+}
+
+template <typename K, typename V>
 size_t HashMap<K, V>::getBucketIndex(const K &key) const {
         return std::hash<K>()(key) % buckets.length();
 }
@@ -138,6 +153,20 @@ HashMap<K, V>::HashMap(size_t bucketsCount) : buckets(bucketsCount) {
         for (size_t i = 0; i < bucketsCount; i++) {
                 this->buckets.pushBack(Sll());
         }
+}
+
+template <typename K, typename V>
+HashMap<K, V>::HashMap(HashMap &&other) noexcept {
+        move(other);
+}
+
+template <typename K, typename V>
+HashMap<K, V> &HashMap<K, V>::operator=(HashMap &&other) noexcept {
+        if (this != &other) {
+                this->~HashMap();
+                move(std::move(other));
+        }
+        return *this;
 }
 
 template <typename K, typename V>

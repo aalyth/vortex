@@ -1,4 +1,5 @@
 
+MAKEFLAGS := -j
 
 TARGET := vortex
 
