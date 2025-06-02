@@ -10,6 +10,11 @@
 #include "instructions/instructions.h"
 #include "value.h"
 
+/// The core of the whole language, used to execute the parsed user programs.
+/// This implementation follows the register based virtual machine architecture,
+/// which allows for more powerful instructions, but harder to programatically
+/// integrate code. Such implementations are also easier to fine-tune and to
+/// optimize compared to stack based alternatives.
 class Vm {
        public:
         static constexpr size_t REGISTER_COUNT = 16;
@@ -35,7 +40,10 @@ class Vm {
         void push(double);
         double pop();
 
-        void pushCallFrame(size_t);
+        /// Pushes the `nextInstruction` to the program stack.
+        void pushCallFrame();
+        /// Pops the top value off the stack and interprets it as an instruction
+        /// location.
         size_t popCallFrame();
 };
 

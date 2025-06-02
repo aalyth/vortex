@@ -35,3 +35,4 @@ vortex
 # My configs for clangd LSP
 .clangd
 
+docs/

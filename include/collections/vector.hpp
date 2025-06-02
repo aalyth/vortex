@@ -6,6 +6,8 @@
 
 #include "option.hpp"
 
+/// An utility, which forces the usage of the `operator=` implementation for the
+/// corresponding type `T`.
 template <typename T>
 static void memclone(T *dst, const T *src, size_t len) {
         if (nullptr == dst || nullptr == src || len == 0) {
@@ -16,6 +18,8 @@ static void memclone(T *dst, const T *src, size_t len) {
         }
 }
 
+/// An utility, which forces the usage of the move version of the `operator=`
+/// implementation for the corresponding type `T`.
 template <typename T>
 static void memmove(T *dst, const T *src, size_t len) {
         if (nullptr == dst || nullptr == src || len == 0) {
@@ -29,12 +33,11 @@ static void memmove(T *dst, const T *src, size_t len) {
 /// Implementation of a dynamic array with automatic resizing and memory
 /// management.
 ///
-/// The reason that the copy constructor and the operator= are deleted is due to
-/// using standard templates compared to type-bounded ones, which require the
-/// type to implement a custom `Copyable` "interface" (abstract class). Such
-/// better approach is not applied, since features such as `concepts` and
-/// bounded polymorphism could be considered outside the scope of the university
-/// class.
+/// The current implementation uses a trivial cloning mechanism, which should
+/// not be used for storing pointers to an abstract base class. In such case the
+/// implementation of copy constructor and `operator=` will just trigger copying
+/// the pointer address instead of an actual deep copy of the values. For that
+/// reason, the usage of the safer type alternative `Box<T>` is advised.
 template <typename T>
 class Vector {
        private:

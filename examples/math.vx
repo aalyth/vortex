@@ -20,8 +20,8 @@ pow:
                 return
         mov r0 1
 pow_loop:
-        mul r0 r1 
-        sub r2 1 
+        mulf r0 r1 
+        subf r2 1 
         ifgt r2 0
                 jmp pow_loop
         return
@@ -52,10 +52,10 @@ sin:
         pop r3          ; x ^ 5 / 5!
         pop r2          ; x ^ 3 / 3!
         
-        sub r0 r2
-        add r0 r3
-        sub r0 r4
-        add r0 r5
+        subf r0 r2
+        addf r0 r3
+        subf r0 r4
+        addf r0 r5
 
         return
 
@@ -85,10 +85,10 @@ cos:
         pop r3          ; x ^ 4 / 4!
         pop r2          ; x ^ 2 / 2!
         
-        sub r0 r2
-        add r0 r3
-        sub r0 r4
-        add r0 r5
+        subf r0 r2
+        addf r0 r3
+        subf r0 r4
+        addf r0 r5
 
         return
 
@@ -108,7 +108,7 @@ power_over_factoriel:
         pop r2          ; n
         pop r3          ; x^n
 
-        div r3 r0       
+        divf r3 r0       
         mov r0 r3
         pop r1          ; x
         return
@@ -117,7 +117,7 @@ power_over_factoriel:
 pi:
         mov r0 22
         mov r1 7
-        div r0 r1
+        divf r0 r1
         return 
         
         
@@ -134,18 +134,18 @@ main:
         call pi
         mov r1 1
         mov r2 3
-        div r1 r2
+        divf r1 r2
 
-        mul r1 r0       ; pi * 1/3
+        mulf r1 r0       ; pi * 1/3
         call sin
         print r0
 
         call pi
         mov r1 1
         mov r2 4
-        div r1 r2
+        divf r1 r2
         
-        mul r1 r0       ; pi * 1/4
+        mulf r1 r0       ; pi * 1/4
         call cos
         print r0
 

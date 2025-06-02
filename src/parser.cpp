@@ -1,7 +1,7 @@
 
 #include "parser.h"
 
-Parser::InstructionFactory Parser::GLOBAL_INSTRUCTION_FACTORY;
+InstructionFactory::Map InstructionFactory::GLOBAL_INSTRUCTION_FACTORY;
 
 String AsmReader::expectArg() {
         if (readPos >= args.length()) {
@@ -62,7 +62,7 @@ void AsmReader::expectEndOfArgs() {
         }
 }
 
-const Parser::InstructionFactory &Parser::getGlobalInstructionFactory() {
+const InstructionFactory::Map &InstructionFactory::getGlobalInstructionFactory() {
         if (GLOBAL_INSTRUCTION_FACTORY.isEmpty()) {
                 GLOBAL_INSTRUCTION_FACTORY.insert("mov", Mov::factory);
 
@@ -77,14 +77,19 @@ const Parser::InstructionFactory &Parser::getGlobalInstructionFactory() {
                 GLOBAL_INSTRUCTION_FACTORY.insert("call", Call::factory);
                 GLOBAL_INSTRUCTION_FACTORY.insert("return", Return::factory);
 
-                GLOBAL_INSTRUCTION_FACTORY.insert("add", BinOpr::add);
-                GLOBAL_INSTRUCTION_FACTORY.insert("sub", BinOpr::sub);
-                GLOBAL_INSTRUCTION_FACTORY.insert("mul", BinOpr::mul);
-                GLOBAL_INSTRUCTION_FACTORY.insert("div", BinOpr::div);
-                GLOBAL_INSTRUCTION_FACTORY.insert("mod", BinOpr::mod);
-                GLOBAL_INSTRUCTION_FACTORY.insert("and", BinOpr::binAnd);
-                GLOBAL_INSTRUCTION_FACTORY.insert("or", BinOpr::binOr);
-                GLOBAL_INSTRUCTION_FACTORY.insert("xor", BinOpr::binXor);
+                GLOBAL_INSTRUCTION_FACTORY.insert("addf", FloatingBinOpr::addf);
+                GLOBAL_INSTRUCTION_FACTORY.insert("subf", FloatingBinOpr::subf);
+                GLOBAL_INSTRUCTION_FACTORY.insert("mulf", FloatingBinOpr::mulf);
+                GLOBAL_INSTRUCTION_FACTORY.insert("divf", FloatingBinOpr::divf);
+
+                GLOBAL_INSTRUCTION_FACTORY.insert("add", IntegerBinOpr::add);
+                GLOBAL_INSTRUCTION_FACTORY.insert("sub", IntegerBinOpr::sub);
+                GLOBAL_INSTRUCTION_FACTORY.insert("mul", IntegerBinOpr::mul);
+                GLOBAL_INSTRUCTION_FACTORY.insert("div", IntegerBinOpr::div);
+                GLOBAL_INSTRUCTION_FACTORY.insert("mod", IntegerBinOpr::mod);
+                GLOBAL_INSTRUCTION_FACTORY.insert("and", IntegerBinOpr::binAnd);
+                GLOBAL_INSTRUCTION_FACTORY.insert("or", IntegerBinOpr::binOr);
+                GLOBAL_INSTRUCTION_FACTORY.insert("xor", IntegerBinOpr::binXor);
 
                 GLOBAL_INSTRUCTION_FACTORY.insert("push", Push::factory);
                 GLOBAL_INSTRUCTION_FACTORY.insert("pop", Pop::factory);
@@ -94,7 +99,7 @@ const Parser::InstructionFactory &Parser::getGlobalInstructionFactory() {
         return GLOBAL_INSTRUCTION_FACTORY;
 }
 
-Parser::Parser() : instructionFactory(getGlobalInstructionFactory()) {
+Parser::Parser() : instructionFactory(InstructionFactory::getGlobalInstructionFactory()) {
 }
 
 void Parser::parseLabel(const String &line, const Context &ctx, size_t currentInstructionIdx) {
@@ -139,7 +144,7 @@ Vector<Box<Instruction>> Parser::linkInstructions(const Vector<RawInstruction> &
         Vector<Box<Instruction>> instructions;
         for (const RawInstruction &instr : rawInstructions) {
                 const String &name = instr.name;
-                Option<InstructionFactoryMethod> factoryMethod = instructionFactory.get(name);
+                Option<InstructionFactory::Method> factoryMethod = instructionFactory.get(name);
                 if (factoryMethod.isNone()) {
                         throw UnknownInstructionException(instr.ctx, name);
                 }

@@ -36,6 +36,15 @@ $(TARGET): $(OBJECTS)
 
 $(foreach source_file, $(SOURCES), $(eval $(call compile_object, $(source_file))))
 
+docs:
+	@ if [ ! $(shell which doxygen) ]; then \
+		echo "missing `doxygen` executable"; \
+		exit 1; \
+	fi
+	doxygen Doxyfile
+	
+
 clean:
 	@ rm $(TARGET) | true
 	@ rm -rf $(OBJDIR) | true
+	@ rm -rf docs | true

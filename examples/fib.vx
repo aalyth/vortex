@@ -27,8 +27,4 @@ main:
         mov r1 15
         call fib
         print r0
-
-        mov r0 5
-        div r0 4
-        print r0
  

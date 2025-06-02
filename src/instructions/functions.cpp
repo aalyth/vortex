@@ -27,7 +27,7 @@ Box<Instruction> Call::factory(AsmReader reader) {
 }
 
 void Call::execute(Vm &vm) const {
-        vm.pushCallFrame(vm.getNextInstruction());
+        vm.pushCallFrame();
         vm.setNextInstruction(location);
 }
 

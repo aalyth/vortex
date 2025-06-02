@@ -3,6 +3,16 @@
 
 #include <stdexcept>
 
+/// A boxed pointer, built in analogue to Rust's `Box<T>` type. In essence,
+/// this type encapsulates a pointer in a safe wrapper, removing the necessity
+/// of caring for manual memory management - the allocated pointer is
+/// automatically deleted upon going out of scope.
+///
+/// In order to facillitate that the copy constructor and `operator=` are be
+/// deleted - if they are to be allowed, the generic type `T` must be type bound
+/// to a custom `Cloneable` concept, which guarantees that the internal pointer
+/// value can be properly copied into different instances. Since concepts are
+/// not a part of the current course, this approach has not been prioritzed.
 template <typename T>
 class Box {
        private:

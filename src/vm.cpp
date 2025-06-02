@@ -35,8 +35,8 @@ double Vm::pop() {
         return stack.popBack().expect("Calling VM::pop() on an empty stack");
 }
 
-void Vm::pushCallFrame(size_t location) {
-        stack.pushBack((int64_t)location);
+void Vm::pushCallFrame() {
+        stack.pushBack((double)nextInstruction);
 }
 
 size_t Vm::popCallFrame() {

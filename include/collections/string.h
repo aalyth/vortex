@@ -7,6 +7,8 @@
 
 #include "vector.hpp"
 
+/// Implementation of a heap allocated string, providing convenient abstraction
+/// methods for working with strings.
 class String {
        private:
         static constexpr double ALLOCATOR_COEF = 1.5;
@@ -24,25 +26,35 @@ class String {
         static String between(const char *, const char *);
 
        public:
+        /// Builds an empty string with the `DEFAULT_CAPACITY`.
         String();
+        /// Builds an empty string with a given capacity.
         String(size_t);
+        /// Builds a heap allocated version of the passed string with just
+        /// enough capacity to hold the data.
         String(const char *);
         String(const String &);
         String(String &&) noexcept;
         ~String();
 
+        /// Converts the given number to a string format.
         static String fromNumber(size_t);
+        /// Reads from the input stream until a newline is found or the stream
+        /// ends.
         static String readLine(std::istream &);
 
         String &operator=(const String &);
         String &operator=(String &&) noexcept;
 
+        /// Appends the character to the end of the string.
         String operator+(char) const;
+        /// Concatenates the other string to `this`.
         String operator+(const String &) const;
 
         bool operator==(const String &) const;
 
         size_t length() const;
+        /// A C-like view of the underlying string data.
         const char *cStr() const;
 
         void append(char);
@@ -53,14 +65,21 @@ class String {
         bool isEmpty() const;
         bool all(bool (*)(char)) const;
 
+        /// Splits the string into a list of non-empty strings, based on the
+        /// passed delimiter.
         Vector<String> split(char) const;
+        /// Returns a copy of the substring between the two indices.
         String substr(size_t, size_t) const;
 
+        /// Removes any heading and trailing whitespaces.
         String trim() const;
 
+        /// Removes all characters after the given stop symbol.
         void truncateAfter(char);
 };
 
+/// Implementation of the `std::hash<String>()` template specialization, used
+/// for `HasHmap` indices.
 namespace std {
 template <>
 struct hash<String> {

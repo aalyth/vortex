@@ -227,7 +227,7 @@ void String::truncateAfter(char c) {
         char *pos = strchr(str, c);
         if (pos != nullptr) {
                 *pos = '\0';
-                len = pos - str;
+                len = (size_t)(pos - str);
         }
 }
 

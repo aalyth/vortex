@@ -5,7 +5,6 @@
 
 void Vortex::execute(const String &filename) {
         try {
-                Parser parser;
                 const Vector<Box<Instruction>> instructions = parser.parseFile(filename);
 
                 const size_t entry =

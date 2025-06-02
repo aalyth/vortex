@@ -6,6 +6,18 @@
 #include "option.hpp"
 #include "vector.hpp"
 
+/// A simple key-value map structure. The type `K` must implement the
+/// `std::hash<K>` template specialization and is implied that the type can be
+/// compared via the `operator==`.
+///
+/// The copy constructor and `operator=` are deleted since they imply type
+/// cloning, which given that `K` is not type-bound to a custom `Cloneable`
+/// concept, should not rely on an arbitrary means of deeply copying data.
+///
+/// This implementation follows the general structure of a `HashMap`, but
+/// instead of using AVL trees for the individual bucket stores, it uses Singly
+/// Linked Lists (SLL), which provide less time complexity amortization, but
+/// still good enough performance.
 template <typename K, typename V>
 class HashMap {
        private:
@@ -22,6 +34,8 @@ class HashMap {
                 SllNode(K, V);
         };
 
+        /// A convenient wrapper around the Singly Linked List (SLL) nodes,
+        /// providing fast insert speeds at the end and at the start.
         class Sll {
                 friend class HashMap;
 
@@ -63,6 +77,8 @@ class HashMap {
         Option<V> get(const K &) const;
         bool contains(const K &) const;
 
+        /// Returns the total number of elements, present across all buckets
+        /// inside the `HashMap`.
         size_t size() const;
         bool isEmpty() const;
 };
@@ -144,14 +160,14 @@ size_t HashMap<K, V>::getBucketIndex(const K &key) const {
 template <typename K, typename V>
 HashMap<K, V>::HashMap() : HashMap(DEFAULT_BUCKETS) {
         for (size_t i = 0; i < DEFAULT_BUCKETS; i++) {
-                this->buckets.pushBack(Sll());
+                buckets.pushBack(Sll());
         }
 }
 
 template <typename K, typename V>
 HashMap<K, V>::HashMap(size_t bucketsCount) : buckets(bucketsCount) {
         for (size_t i = 0; i < bucketsCount; i++) {
-                this->buckets.pushBack(Sll());
+                buckets.pushBack(Sll());
         }
 }
 

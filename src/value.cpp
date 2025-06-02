@@ -20,5 +20,5 @@ size_t Register::getReg() const {
 Literal::Literal(int64_t _literal) : literal(_literal) {
 }
 double Literal::getValue(const Vm &) const {
-        return literal;
+        return (double)literal;
 }

@@ -3,28 +3,48 @@
 
 #include <stdexcept>
 
+/// Type wrapper class, providing a convenient way of indicating a possibly
+/// unset value. The type is an analogue to Rust's `Option<T>` type with the
+/// difference that this implementation does not have native support by the C++
+/// language and cannot be pattern-matched.
+///
+/// Accessing an unset value throws an `std::runtime_error` exception.
 template <typename T>
-class Option final {
+class Option {
        private:
         T value;
         bool isSet;
 
        public:
+        /// Builds an empty value - similar to `None`.
         Option();
+        /// Wraps the value - similar to `Some()`.
         Option(T);
 
         Option& operator=(const Option<T>&);
 
         bool isNone() const;
         bool isSome() const;
+        /// Attempts to access the value inside the container; throws
+        /// `std::runtime_error` exception if the value is not set.
         T unwrap();
+        /// Attempts to access the value inside the container; throws
+        /// `std::runtime_error` exception if the value is not set.
         const T unwrap() const;
+        /// Attempts to access the value inside the container; throws
+        /// `std::runtime_error` exception with the given message if the value
+        /// is not set.
         T expect(const char*);
+        /// Attempts to access the value inside the container; throws an
+        /// `std::runtime_error` exception with the given message if the value
+        /// is not set.
         const T expect(const char*) const;
 };
 
+/// Template specialization for the `Option<T>` type, which provides means to
+/// safely use generic type references inside the struct.
 template <typename T>
-class Option<T&> final {
+class Option<T&> {
        private:
         T* value;
 
@@ -34,9 +54,19 @@ class Option<T&> final {
 
         Option& operator=(const Option<T>&);
 
+        /// Attempts to access the value inside the container; throws
+        /// `std::runtime_error` exception if the value is not set.
         T& unwrap();
+        /// Attempts to access the value inside the container; throws
+        /// `std::runtime_error` exception if the value is not set.
         const T& unwrap() const;
+        /// Attempts to access the value inside the container; throws
+        /// `std::runtime_error` exception with the given message if the value
+        /// is not set.
         T& expect(const char*);
+        /// Attempts to access the value inside the container; throws an
+        /// `std::runtime_error` exception with the given message if the value
+        /// is not set.
         const T& expect(const char*) const;
 };
 
