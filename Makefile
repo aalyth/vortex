@@ -17,7 +17,7 @@ OBJECTS := $(foreach source_file, $(SOURCES), $(call get_object_name, $(source_f
 std := c++20
 flags := -O2 -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion -Wunused-function
 
-CXX := g++
+CXX := clang++
 CXXFLAGS := -I $(INCDIR) -std=$(std) $(flags)
 
 VPATH := $(shell find $(SRCDIR) -type d) .

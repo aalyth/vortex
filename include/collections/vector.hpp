@@ -224,7 +224,7 @@ Option<T> Vector<T>::popBack() {
                 return Option<T>();
         }
         T value = data[--len];
-        return value;
+        return Option<T>(value);
 }
 
 template <typename T>
@@ -237,7 +237,7 @@ Option<T> Vector<T>::popFront() {
                 data[i] = data[i + 1];
         }
         len -= 1;
-        return result;
+        return Option<T>(result);
 }
 
 template <typename T>
@@ -245,7 +245,7 @@ Option<const T &> Vector<T>::operator[](size_t idx) const {
         if (idx >= len) {
                 return Option<const T &>();
         }
-        return data[idx];
+        return Option<const T &>(data[idx]);
 }
 
 template <typename T>
@@ -253,7 +253,7 @@ Option<T &> Vector<T>::operator[](size_t idx) {
         if (idx >= len) {
                 return Option<T &>();
         }
-        return data[idx];
+        return Option<T &>(data[idx]);
 }
 
 template <typename T>

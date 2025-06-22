@@ -3,7 +3,7 @@
 
 #include "vortex.h"
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
         Vortex vortex;
         if (argc != 2) {
                 vortex.showSynopsis();

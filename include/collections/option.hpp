@@ -17,9 +17,9 @@ class Option {
 
        public:
         /// Builds an empty value - similar to `None`.
-        Option();
+        explicit Option();
         /// Wraps the value - similar to `Some()`.
-        Option(T);
+        explicit Option(T);
 
         Option& operator=(const Option<T>&);
 
@@ -54,6 +54,8 @@ class Option<T&> {
 
         Option& operator=(const Option<T>&);
 
+        bool isNone() const;
+        bool isSome() const;
         /// Attempts to access the value inside the container; throws
         /// `std::runtime_error` exception if the value is not set.
         T& unwrap();
@@ -137,6 +139,16 @@ Option<T&>::Option() : value(nullptr) {
 
 template <typename T>
 Option<T&>::Option(T& _value) : value(&_value) {
+}
+
+template <typename T>
+bool Option<T&>::isNone() const {
+        return nullptr == value;
+}
+
+template <typename T>
+bool Option<T&>::isSome() const {
+        return value != nullptr;
 }
 
 template <typename T>

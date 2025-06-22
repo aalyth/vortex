@@ -110,14 +110,6 @@ String &String::operator=(String &&other) noexcept {
         return *this;
 }
 
-bool String::operator==(const String &other) const {
-        const size_t minLen = std::min(this->len, other.len);
-        if (this->len != other.len) {
-                return false;
-        }
-        return 0 == strncmp(this->str, other.str, minLen);
-}
-
 String String::operator+(char c) const {
         String result(*this);
         result.append(c);
@@ -245,6 +237,38 @@ String String::trim() const {
                 --end;
         }
         return substr(start, end);
+}
+
+Ordering String::compare(const String &other) const {
+        const size_t minLen = std::min(len, other.len);
+        const int cmp = strncmp(str, other.str, minLen);
+        if (cmp < 0) {
+                return Ordering::Less;
+        }
+        if (cmp > 0) {
+                return Ordering::Greater;
+        }
+        return Ordering::Equal;
+}
+
+bool operator<(const String &lhs, const String &rhs) {
+        return lhs.compare(rhs) == Ordering::Less;
+}
+
+bool operator>(const String &lhs, const String &rhs) {
+        return lhs.compare(rhs) == Ordering::Greater;
+}
+
+bool operator==(const String &lhs, const String &rhs) {
+        return lhs.compare(rhs) == Ordering::Equal;
+}
+
+size_t String::hash() const {
+        size_t result = 0;
+        for (size_t i = 0; i < len; ++i) {
+                result = result * 31 + (size_t)str[i];
+        }
+        return result;
 }
 
 bool isAlpha(char c) {

@@ -5,11 +5,12 @@
 #include <cstddef>
 #include <fstream>
 
+#include "traits.hpp"
 #include "vector.hpp"
 
 /// Implementation of a heap allocated string, providing convenient abstraction
 /// methods for working with strings.
-class String {
+class String : public Compare<String>, public Hash {
        private:
         static constexpr double ALLOCATOR_COEF = 1.5;
         static constexpr size_t DEFAULT_CAPACITY = 16;
@@ -51,8 +52,6 @@ class String {
         /// Concatenates the other string to `this`.
         String operator+(const String &) const;
 
-        bool operator==(const String &) const;
-
         size_t length() const;
         /// A C-like view of the underlying string data.
         const char *cStr() const;
@@ -76,23 +75,13 @@ class String {
 
         /// Removes all characters after the given stop symbol.
         void truncateAfter(char);
-};
 
-/// Implementation of the `std::hash<String>()` template specialization, used
-/// for `HasHmap` indices.
-namespace std {
-template <>
-struct hash<String> {
-        size_t operator()(const String &value) const {
-                size_t result = 0;
-                const char *str = value.cStr();
-                for (size_t i = 0; i < value.length(); ++i) {
-                        result = result * 31 + (size_t)str[i];
-                }
-                return result;
-        }
+        virtual Ordering compare(const String &) const override;
+        friend bool operator<(const String &, const String &);
+        friend bool operator>(const String &, const String &);
+        friend bool operator==(const String &, const String &);
+        virtual size_t hash() const override;
 };
-}  // namespace std
 
 String operator+(const char *, const String &);
 std::ostream &operator<<(std::ostream &, const String &);

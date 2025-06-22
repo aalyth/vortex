@@ -1,10 +1,13 @@
 #ifndef VORTEX_HASH_MAP_HPP
 #define VORTEX_HASH_MAP_HPP
 
-#include <functional>
-
+#include "collections/avl.hpp"
 #include "option.hpp"
+#include "traits.hpp"
 #include "vector.hpp"
+
+template <typename T>
+concept Key = Hashable<T> && Comparable<T>;
 
 /// A simple key-value map structure. The type `K` must implement the
 /// `std::hash<K>` template specialization and is implied that the type can be
@@ -18,47 +21,63 @@
 /// instead of using AVL trees for the individual bucket stores, it uses Singly
 /// Linked Lists (SLL), which provide less time complexity amortization, but
 /// still good enough performance.
-template <typename K, typename V>
+template <Key K, typename V>
 class HashMap {
-       private:
-        class SllNode {
-                friend class Sll;
-                friend class HashMap;
-
-               private:
-                K key;
-                V value;
-                SllNode *next;
-
-               public:
-                SllNode(K, V);
-        };
-
-        /// A convenient wrapper around the Singly Linked List (SLL) nodes,
-        /// providing fast insert speeds at the end and at the start.
-        class Sll {
-                friend class HashMap;
-
-               private:
-                SllNode *head = nullptr;
-                SllNode *tail = nullptr;
-
-               public:
-                Sll() = default;
-                ~Sll();
-
-                void pushBack(K, V);
-                Option<SllNode> popFront();
-                Option<V> get(const K &) const;
-                bool contains(const K &) const;
-        };
-
        private:
         static constexpr size_t DEFAULT_BUCKETS = 16;
 
+        struct Entry : public Compare<Entry>, public Compare<K> {
+               private:
+                K key;
+                V value;
+
+               public:
+                Entry(K k, V v) : key(k), value(v) {
+                }
+
+                virtual Ordering compare(const Entry &other) const override {
+                        return key.compare(other.getKey());
+                }
+
+                virtual Ordering compare(const K &other) const override {
+                        return key.compare(other);
+                }
+                friend bool operator<(const Entry &lhs, const Entry &rhs) {
+                        return lhs.compare(rhs) == Ordering::Less;
+                }
+
+                friend bool operator>(const Entry &lhs, const Entry &rhs) {
+                        return lhs.compare(rhs) == Ordering::Greater;
+                }
+
+                friend bool operator==(const Entry &lhs, const Entry &rhs) {
+                        return lhs.compare(rhs) == Ordering::Equal;
+                }
+
+                friend bool operator<(const Entry &lhs, const K &rhs) {
+                        return lhs.getKey().compare(rhs) == Ordering::Less;
+                }
+
+                friend bool operator>(const Entry &lhs, const K &rhs) {
+                        return lhs.getKey().compare(rhs) == Ordering::Greater;
+                }
+
+                friend bool operator==(const Entry &lhs, const K &rhs) {
+                        return lhs.getKey().compare(rhs) == Ordering::Equal;
+                }
+
+                const K &getKey() const {
+                        return key;
+                }
+
+                const V &getValue() const {
+                        return value;
+                }
+        };
+
        private:
         size_t elementsCount = 0;
-        Vector<Sll> buckets;
+        Vector<AvlTree<Entry>> buckets;
 
         void free();
         void move(HashMap &&) noexcept;
@@ -83,100 +102,44 @@ class HashMap {
         bool isEmpty() const;
 };
 
-template <typename K, typename V>
-HashMap<K, V>::SllNode::SllNode(K _key, V _value) : key(_key), value(_value), next(nullptr) {
-}
-
-template <typename K, typename V>
-void HashMap<K, V>::Sll::pushBack(K key, V value) {
-        SllNode *node = new SllNode(key, value);
-        if (head == nullptr) {
-                head = node;
-                tail = node;
-        } else {
-                tail->next = node;
-                tail = node;
-        }
-}
-
-template <typename K, typename V>
-HashMap<K, V>::Sll::~Sll() {
-        SllNode *node = head;
-        while (node != nullptr) {
-                SllNode *next = node->next;
-                delete node;
-                node = next;
-        }
-}
-
-template <typename K, typename V>
-Option<typename HashMap<K, V>::SllNode> HashMap<K, V>::Sll::popFront() {
-        if (head == nullptr) {
-                return Option<SllNode>();
-        }
-        SllNode *node = head;
-        head = head->next;
-        if (head == nullptr) {
-                tail = nullptr;
-        }
-        return *node;
-}
-
-template <typename K, typename V>
-Option<V> HashMap<K, V>::Sll::get(const K &key) const {
-        SllNode *node = head;
-        while (node != nullptr) {
-                if (node->key == key) {
-                        return Option<V>(node->value);
-                }
-                node = node->next;
-        }
-        return Option<V>();
-}
-
-template <typename K, typename V>
-bool HashMap<K, V>::Sll::contains(const K &key) const {
-        return get(key);
-}
-
-template <typename K, typename V>
+template <Key K, typename V>
 void HashMap<K, V>::free() {
         elementsCount = 0;
         buckets.~Vector();
 }
 
-template <typename K, typename V>
+template <Key K, typename V>
 void HashMap<K, V>::move(HashMap<K, V> &&other) noexcept {
         this->elementsCount = other.elementsCount;
         this->buckets = std::move(other.buckets);
         other.elementsCount = 0;
 }
 
-template <typename K, typename V>
+template <Key K, typename V>
 size_t HashMap<K, V>::getBucketIndex(const K &key) const {
-        return std::hash<K>()(key) % buckets.length();
+        return hash(key) % buckets.length();
 }
 
-template <typename K, typename V>
+template <Key K, typename V>
 HashMap<K, V>::HashMap() : HashMap(DEFAULT_BUCKETS) {
         for (size_t i = 0; i < DEFAULT_BUCKETS; i++) {
-                buckets.pushBack(Sll());
+                buckets.pushBack(AvlTree<Entry>());
         }
 }
 
-template <typename K, typename V>
+template <Key K, typename V>
 HashMap<K, V>::HashMap(size_t bucketsCount) : buckets(bucketsCount) {
         for (size_t i = 0; i < bucketsCount; i++) {
-                buckets.pushBack(Sll());
+                buckets.pushBack(AvlTree<Entry>());
         }
 }
 
-template <typename K, typename V>
+template <Key K, typename V>
 HashMap<K, V>::HashMap(HashMap &&other) noexcept {
         move(other);
 }
 
-template <typename K, typename V>
+template <Key K, typename V>
 HashMap<K, V> &HashMap<K, V>::operator=(HashMap &&other) noexcept {
         if (this != &other) {
                 this->~HashMap();
@@ -185,30 +148,34 @@ HashMap<K, V> &HashMap<K, V>::operator=(HashMap &&other) noexcept {
         return *this;
 }
 
-template <typename K, typename V>
+template <Key K, typename V>
 void HashMap<K, V>::insert(K key, V value) {
         elementsCount += 1;
         const size_t index = getBucketIndex(key);
-        buckets[index].unwrap().pushBack(key, value);
+        buckets[index].unwrap().insert(Entry(key, value));
 }
 
-template <typename K, typename V>
+template <Key K, typename V>
 Option<V> HashMap<K, V>::get(const K &key) const {
         const size_t index = getBucketIndex(key);
-        return buckets[index].unwrap().get(key);
+        Option<const Entry &> entry = buckets[index].unwrap().find(key);
+        if (entry.isNone()) {
+                return Option<V>();
+        }
+        return Option<V>(entry.unwrap().getValue());
 }
 
-template <typename K, typename V>
+template <Key K, typename V>
 bool HashMap<K, V>::contains(const K &key) const {
         return get(key).isSome();
 }
 
-template <typename K, typename V>
+template <Key K, typename V>
 size_t HashMap<K, V>::size() const {
         return elementsCount;
 }
 
-template <typename K, typename V>
+template <Key K, typename V>
 bool HashMap<K, V>::isEmpty() const {
         return size() == 0;
 }
