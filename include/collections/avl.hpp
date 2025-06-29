@@ -17,10 +17,10 @@ class AvlTreeException : public std::exception {
         virtual const char *what() const noexcept override;
 };
 
-template <Comparable T>
+template <vortex::Comparable T>
 class AvlTree;
 
-template <Comparable T>
+template <vortex::Comparable T>
 class AvlTreeNode {
        private:
         enum class Balance;
@@ -32,6 +32,30 @@ class AvlTreeNode {
         unsigned depth = 1;
 
        private:
+        AvlTreeNode(T);
+        AvlTreeNode(const AvlTreeNode &)
+                requires vortex::Cloneable<T>;
+        AvlTreeNode(AvlTreeNode &&) noexcept
+                requires vortex::Moveable<T>;
+        ~AvlTreeNode();
+
+        AvlTreeNode &operator=(const AvlTreeNode &)
+                requires vortex::Cloneable<T>;
+        AvlTreeNode &operator=(AvlTreeNode &&) noexcept
+                requires vortex::Moveable<T>;
+
+        static AvlTreeNode *insert(AvlTreeNode *, T);
+
+        template <typename Comparator>
+                requires vortex::Comparable<T, Comparator>
+        static Option<const T &> find(const AvlTreeNode *, const Comparator &);
+
+       private:
+        void clone(const AvlTreeNode &)
+                requires vortex::Cloneable<T>;
+        void move(AvlTreeNode &&) noexcept
+                requires vortex::Moveable<T>;
+        void free();
         static void safeUpdateDepth(AvlTreeNode *);
 
         unsigned leftDepth() const;
@@ -58,13 +82,6 @@ class AvlTreeNode {
          */
         AvlTreeNode *rotateRight();
 
-        AvlTreeNode(T);
-        static AvlTreeNode *insert(AvlTreeNode *, T);
-
-        template <typename Comparator>
-                requires Comparable<T, Comparator>
-        static Option<const T &> find(const AvlTreeNode *, const Comparator &);
-
        private:
         enum class Balance {
                 Balanced,
@@ -77,111 +94,83 @@ class AvlTreeNode {
         friend class AvlTree<T>;
 };
 
-template <Comparable T>
+template <vortex::Comparable T>
 class AvlTree {
        private:
         AvlTreeNode<T> *root = nullptr;
 
+        void copy(const AvlTree &)
+                requires vortex::Cloneable<T>;
+        void move(AvlTree &&) noexcept
+                requires vortex::Moveable<T>;
+        void free();
+
        public:
         AvlTree() = default;
+        AvlTree(const AvlTree &)
+                requires vortex::Cloneable<T>;
+        AvlTree(AvlTree &&) noexcept
+                requires vortex::Moveable<T>;
+        ~AvlTree();
+
+        AvlTree &operator=(const AvlTree &)
+                requires vortex::Cloneable<T>;
+        AvlTree &operator=(AvlTree &&) noexcept
+                requires vortex::Moveable<T>;
+
         void insert(T value);
 
-        template <typename F>
-                requires Comparable<T, F>
-        Option<const T &> find(const F &) const;
+        template <typename Comparator>
+                requires vortex::Comparable<T, Comparator>
+        Option<const T &> find(const Comparator &) const;
 };
 
-template <Comparable T>
-void AvlTreeNode<T>::safeUpdateDepth(AvlTreeNode<T> *node) {
-        if (node != nullptr) {
-                node->depth = 1 + std::max(node->leftDepth(), node->rightDepth());
-        }
-}
-
-template <Comparable T>
-unsigned AvlTreeNode<T>::leftDepth() const {
-        if (nullptr == left) {
-                return 0;
-        }
-        return left->depth;
-}
-
-template <Comparable T>
-unsigned AvlTreeNode<T>::rightDepth() const {
-        if (nullptr == right) {
-                return 0;
-        }
-        return right->depth;
-}
-
-template <Comparable T>
-int AvlTreeNode<T>::depthDiff() const {
-        return static_cast<int>(leftDepth()) - static_cast<int>(rightDepth());
-}
-
-template <Comparable T>
-AvlTreeNode<T>::Balance AvlTreeNode<T>::getBalance() const {
-        const int rootDepthDiff = depthDiff();
-        if (std::abs(rootDepthDiff) < 2) {
-                return Balance::Balanced;
-        }
-
-        if (rootDepthDiff > 1) {
-                const int childDepthDiff = left->depthDiff();
-                if (childDepthDiff > 0) {
-                        return Balance::LeftLeft;
-                }
-                return Balance::LeftRight;
-        }
-        if (rootDepthDiff < -1) {
-                const int childDepthDiff = right->depthDiff();
-                if (childDepthDiff > 0) {
-                        return Balance::RightLeft;
-                }
-                return Balance::RightRight;
-        }
-        return Balance::RightRight;
-}
-
-template <Comparable T>
-AvlTreeNode<T> *AvlTreeNode<T>::rotateLeft() {
-        if (nullptr == right) {
-                throw AvlTreeException("Left rotation without a right child node");
-        }
-
-        AvlTreeNode *k = right;
-        AvlTreeNode *t2 = k->left;
-
-        this->right = t2;
-        k->left = this;
-
-        safeUpdateDepth(this);
-        safeUpdateDepth(k);
-        return k;
-}
-
-template <Comparable T>
-AvlTreeNode<T> *AvlTreeNode<T>::rotateRight() {
-        if (nullptr == left) {
-                throw AvlTreeException("Right rotation without a left child node");
-        }
-
-        AvlTreeNode *k = left;
-        AvlTreeNode *t2 = k->right;
-
-        this->left = t2;
-        k->right = this;
-
-        safeUpdateDepth(this);
-        safeUpdateDepth(k);
-        return k;
-}
-
-template <Comparable T>
+template <vortex::Comparable T>
 AvlTreeNode<T>::AvlTreeNode(T val) : value(val) {
 }
 
-template <Comparable T>
+template <vortex::Comparable T>
+AvlTreeNode<T>::AvlTreeNode(const AvlTreeNode &other)
+        requires vortex::Cloneable<T>
+{
+        clone(other);
+}
+
+template <vortex::Comparable T>
+AvlTreeNode<T>::AvlTreeNode(AvlTreeNode &&other) noexcept
+        requires vortex::Moveable<T>
+{
+        move(std::move(other));
+}
+
+template <vortex::Comparable T>
+AvlTreeNode<T>::~AvlTreeNode() {
+        free();
+}
+
+template <vortex::Comparable T>
+AvlTreeNode<T> &AvlTreeNode<T>::operator=(const AvlTreeNode &other)
+        requires vortex::Cloneable<T>
+{
+        if (this != &other) {
+                free();
+                clone(other);
+        }
+        return *this;
+}
+
+template <vortex::Comparable T>
+AvlTreeNode<T> &AvlTreeNode<T>::operator=(AvlTreeNode &&other) noexcept
+        requires vortex::Moveable<T>
+{
+        if (this != &other) {
+                free();
+                move(std::move(other));
+        }
+        return *this;
+}
+
+template <vortex::Comparable T>
 AvlTreeNode<T> *AvlTreeNode<T>::insert(AvlTreeNode *node, T value) {
         if (node == nullptr) {
                 return new AvlTreeNode<T>(value);
@@ -215,9 +204,9 @@ AvlTreeNode<T> *AvlTreeNode<T>::insert(AvlTreeNode *node, T value) {
         return node;
 }
 
-template <Comparable T>
+template <vortex::Comparable T>
 template <typename Comparator>
-        requires Comparable<T, Comparator>
+        requires vortex::Comparable<T, Comparator>
 Option<const T &> AvlTreeNode<T>::find(const AvlTreeNode *node, const Comparator &searchVal) {
         if (nullptr == node) {
                 return Option<const T &>();
@@ -232,16 +221,205 @@ Option<const T &> AvlTreeNode<T>::find(const AvlTreeNode *node, const Comparator
         return find(node->right, searchVal);
 }
 
-template <Comparable T>
+template <vortex::Comparable T>
+void AvlTreeNode<T>::clone(const AvlTreeNode &other)
+        requires vortex::Cloneable<T>
+{
+        value = other.value.clone();
+        depth = other.depth.clone();
+        if (other.left != nullptr) {
+                left = new AvlTreeNode<T>(*other.left);
+        } else {
+                left = nullptr;
+        }
+        if (other.right != nullptr) {
+                right = new AvlTreeNode<T>(*other.right);
+        } else {
+                right = nullptr;
+        }
+}
+
+template <vortex::Comparable T>
+void AvlTreeNode<T>::move(AvlTreeNode &&other) noexcept
+        requires vortex::Moveable<T>
+{
+        value = std::move(other.value);
+        depth = other.depth;
+        left = other.left;
+        right = other.right;
+        other.left = nullptr;
+        other.right = nullptr;
+        other.depth = 0;
+}
+
+template <vortex::Comparable T>
+void AvlTreeNode<T>::free() {
+        delete left;
+        delete right;
+        left = nullptr;
+        right = nullptr;
+        depth = 0;
+}
+
+template <vortex::Comparable T>
+void AvlTreeNode<T>::safeUpdateDepth(AvlTreeNode<T> *node) {
+        if (node != nullptr) {
+                node->depth = 1 + std::max(node->leftDepth(), node->rightDepth());
+        }
+}
+
+template <vortex::Comparable T>
+unsigned AvlTreeNode<T>::leftDepth() const {
+        if (nullptr == left) {
+                return 0;
+        }
+        return left->depth;
+}
+
+template <vortex::Comparable T>
+unsigned AvlTreeNode<T>::rightDepth() const {
+        if (nullptr == right) {
+                return 0;
+        }
+        return right->depth;
+}
+
+template <vortex::Comparable T>
+int AvlTreeNode<T>::depthDiff() const {
+        return static_cast<int>(leftDepth()) - static_cast<int>(rightDepth());
+}
+
+template <vortex::Comparable T>
+AvlTreeNode<T>::Balance AvlTreeNode<T>::getBalance() const {
+        const int rootDepthDiff = depthDiff();
+        if (std::abs(rootDepthDiff) < 2) {
+                return Balance::Balanced;
+        }
+
+        if (rootDepthDiff > 1) {
+                const int childDepthDiff = left->depthDiff();
+                if (childDepthDiff > 0) {
+                        return Balance::LeftLeft;
+                }
+                return Balance::LeftRight;
+        }
+        if (rootDepthDiff < -1) {
+                const int childDepthDiff = right->depthDiff();
+                if (childDepthDiff > 0) {
+                        return Balance::RightLeft;
+                }
+                return Balance::RightRight;
+        }
+        return Balance::RightRight;
+}
+
+template <vortex::Comparable T>
+AvlTreeNode<T> *AvlTreeNode<T>::rotateLeft() {
+        if (nullptr == right) {
+                throw AvlTreeException("Left rotation without a right child node");
+        }
+
+        AvlTreeNode *k = right;
+        AvlTreeNode *t2 = k->left;
+
+        this->right = t2;
+        k->left = this;
+
+        safeUpdateDepth(this);
+        safeUpdateDepth(k);
+        return k;
+}
+
+template <vortex::Comparable T>
+AvlTreeNode<T> *AvlTreeNode<T>::rotateRight() {
+        if (nullptr == left) {
+                throw AvlTreeException("Right rotation without a left child node");
+        }
+
+        AvlTreeNode *k = left;
+        AvlTreeNode *t2 = k->right;
+
+        this->left = t2;
+        k->right = this;
+
+        safeUpdateDepth(this);
+        safeUpdateDepth(k);
+        return k;
+}
+
+template <vortex::Comparable T>
+AvlTree<T>::AvlTree(const AvlTree &other)
+        requires vortex::Cloneable<T>
+{
+        copy(other);
+}
+
+template <vortex::Comparable T>
+AvlTree<T>::AvlTree(AvlTree &&other) noexcept
+        requires vortex::Moveable<T>
+{
+        move(std::move(other));
+}
+
+template <vortex::Comparable T>
+AvlTree<T>::~AvlTree() {
+        free();
+}
+
+template <vortex::Comparable T>
+AvlTree<T> &AvlTree<T>::operator=(const AvlTree &other)
+        requires vortex::Cloneable<T>
+{
+        if (this != &other) {
+                free();
+                copy(other);
+        }
+        return *this;
+}
+
+template <vortex::Comparable T>
+AvlTree<T> &AvlTree<T>::operator=(AvlTree &&other) noexcept
+        requires vortex::Moveable<T>
+{
+        if (this != &other) {
+                free();
+                move(std::move(other));
+        }
+        return *this;
+}
+
+template <vortex::Comparable T>
 void AvlTree<T>::insert(T value) {
         root = AvlTreeNode<T>::insert(root, value);
 }
 
-template <Comparable T>
-template <typename F>
-        requires Comparable<T, F>
-Option<const T &> AvlTree<T>::find(const F &searchVal) const {
+template <vortex::Comparable T>
+template <typename Comparator>
+        requires vortex::Comparable<T, Comparator>
+Option<const T &> AvlTree<T>::find(const Comparator &searchVal) const {
         return AvlTreeNode<T>::find(root, searchVal);
+}
+
+template <vortex::Comparable T>
+void AvlTree<T>::copy(const AvlTree &other)
+        requires vortex::Cloneable<T>
+
+{
+        root = other.root;
+}
+
+template <vortex::Comparable T>
+void AvlTree<T>::move(AvlTree &&other) noexcept
+        requires vortex::Moveable<T>
+{
+        this->root = other.root;
+        other.root = nullptr;
+}
+
+template <vortex::Comparable T>
+void AvlTree<T>::free() {
+        delete root;
+        root = nullptr;
 }
 
 #endif

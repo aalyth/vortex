@@ -3,6 +3,8 @@
 
 #include <stdexcept>
 
+#include "traits.hpp"
+
 /// Type wrapper class, providing a convenient way of indicating a possibly
 /// unset value. The type is an analogue to Rust's `Option<T>` type with the
 /// difference that this implementation does not have native support by the C++
@@ -21,7 +23,8 @@ class Option {
         /// Wraps the value - similar to `Some()`.
         explicit Option(T);
 
-        Option& operator=(const Option<T>&);
+        Option& operator=(const Option<T>&)
+                requires vortex::Cloneable<T>;
 
         bool isNone() const;
         bool isSome() const;
@@ -81,7 +84,9 @@ Option<T>::Option(T _value) : value(_value), isSet(true) {
 }
 
 template <typename T>
-Option<T>& Option<T>::operator=(const Option<T>& other) {
+Option<T>& Option<T>::operator=(const Option<T>& other)
+        requires vortex::Cloneable<T>
+{
         if (this != other) {
                 this->isSet = other.isSet;
                 if (this->isSet) {

@@ -10,7 +10,7 @@
 
 /// Implementation of a heap allocated string, providing convenient abstraction
 /// methods for working with strings.
-class String : public Compare<String>, public Hash {
+class String : public vortex::Compare<String>, public vortex::Hash {
        private:
         static constexpr double ALLOCATOR_COEF = 1.5;
         static constexpr size_t DEFAULT_CAPACITY = 16;
@@ -76,7 +76,7 @@ class String : public Compare<String>, public Hash {
         /// Removes all characters after the given stop symbol.
         void truncateAfter(char);
 
-        virtual Ordering compare(const String &) const override;
+        virtual vortex::Ordering compare(const String &) const override;
         friend bool operator<(const String &, const String &);
         friend bool operator>(const String &, const String &);
         friend bool operator==(const String &, const String &);

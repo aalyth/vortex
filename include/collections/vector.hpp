@@ -5,22 +5,23 @@
 #include <cstddef>
 
 #include "option.hpp"
+#include "traits.hpp"
 
 /// An utility, which forces the usage of the `operator=` implementation for the
 /// corresponding type `T`.
-template <typename T>
+template <vortex::Cloneable T>
 static void memclone(T *dst, const T *src, size_t len) {
         if (nullptr == dst || nullptr == src || len == 0) {
                 return;
         }
         for (size_t i = 0; i < len; ++i) {
-                dst[i] = src[i];
+                dst[i] = vortex::clone(src[i]);
         }
 }
 
 /// An utility, which forces the usage of the move version of the `operator=`
 /// implementation for the corresponding type `T`.
-template <typename T>
+template <vortex::Moveable T>
 static void memmove(T *dst, const T *src, size_t len) {
         if (nullptr == dst || nullptr == src || len == 0) {
                 return;
@@ -61,7 +62,8 @@ class Vector {
         size_t len;
         size_t cap;
 
-        void clone(const Vector &);
+        void clone(const Vector &)
+                requires vortex::Cloneable<T>;
         void realloc(size_t);
         void free();
         void move(Vector &&) noexcept;
@@ -69,17 +71,22 @@ class Vector {
        public:
         Vector();
         Vector(size_t);
-        Vector(const Vector &);
-        Vector(Vector &&) noexcept;
+        Vector(const Vector &)
+                requires vortex::Cloneable<T>;
+        Vector(Vector &&) noexcept
+                requires vortex::Moveable<T>;
         ~Vector();
 
-        Vector &operator=(const Vector &);
-        Vector &operator=(Vector &&) noexcept;
+        Vector &operator=(const Vector &)
+                requires vortex::Cloneable<T>;
+        Vector &operator=(Vector &&) noexcept
+                requires vortex::Moveable<T>;
 
         size_t length() const;
 
         void pushBack(T &);
-        void pushBack(T &&);
+        void pushBack(T &&)
+                requires vortex::Moveable<T>;
         Option<T> popBack();
         Option<T> popFront();
 
@@ -111,7 +118,9 @@ Vector<T>::Iterator &Vector<T>::Iterator::operator++() {
 }
 
 template <typename T>
-void Vector<T>::clone(const Vector<T> &other) {
+void Vector<T>::clone(const Vector<T> &other)
+        requires vortex::Cloneable<T>
+{
         this->cap = other.cap;
         this->len = other.len;
         this->data = new T[this->cap];
@@ -160,12 +169,16 @@ Vector<T>::Vector(size_t capacity) : len(0), cap(capacity) {
 }
 
 template <typename T>
-Vector<T>::Vector(const Vector &other) {
+Vector<T>::Vector(const Vector &other)
+        requires vortex::Cloneable<T>
+{
         clone(other);
 }
 
 template <typename T>
-Vector<T>::Vector(Vector &&other) noexcept {
+Vector<T>::Vector(Vector &&other) noexcept
+        requires vortex::Moveable<T>
+{
         move(std::move(other));
 }
 
@@ -175,7 +188,9 @@ Vector<T>::~Vector() {
 }
 
 template <typename T>
-Vector<T> &Vector<T>::operator=(const Vector<T> &other) {
+Vector<T> &Vector<T>::operator=(const Vector<T> &other)
+        requires vortex::Cloneable<T>
+{
         if (this != &other) {
                 free();
                 clone(other);
@@ -184,7 +199,9 @@ Vector<T> &Vector<T>::operator=(const Vector<T> &other) {
 }
 
 template <typename T>
-Vector<T> &Vector<T>::operator=(Vector<T> &&other) noexcept {
+Vector<T> &Vector<T>::operator=(Vector<T> &&other) noexcept
+        requires vortex::Moveable<T>
+{
         if (this != &other) {
                 free();
                 move(std::move(other));
@@ -200,19 +217,18 @@ size_t Vector<T>::length() const {
 template <typename T>
 void Vector<T>::pushBack(T &value) {
         if (len == cap) {
-                // NOTE: this itself is not the proper way C++ way to do it,
-                // since the implicit C-style in C++ compiles down to 5
-                // different C++ casts
-                cap = (size_t)((double)cap * ALLOCATOR_COEF);
+                cap = static_cast<size_t>(static_cast<double>(cap) * ALLOCATOR_COEF);
                 realloc(cap);
         }
         data[len++] = value;
 }
 
 template <typename T>
-void Vector<T>::pushBack(T &&value) {
+void Vector<T>::pushBack(T &&value)
+        requires vortex::Moveable<T>
+{
         if (len == cap) {
-                cap = (size_t)((double)cap * ALLOCATOR_COEF);
+                cap = static_cast<size_t>(static_cast<double>(cap) * ALLOCATOR_COEF);
                 realloc(cap);
         }
         data[len++] = std::move(value);

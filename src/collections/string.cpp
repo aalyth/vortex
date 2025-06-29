@@ -239,28 +239,28 @@ String String::trim() const {
         return substr(start, end);
 }
 
-Ordering String::compare(const String &other) const {
+vortex::Ordering String::compare(const String &other) const {
         const size_t minLen = std::min(len, other.len);
         const int cmp = strncmp(str, other.str, minLen);
         if (cmp < 0) {
-                return Ordering::Less;
+                return vortex::Ordering::Less;
         }
         if (cmp > 0) {
-                return Ordering::Greater;
+                return vortex::Ordering::Greater;
         }
-        return Ordering::Equal;
+        return vortex::Ordering::Equal;
 }
 
 bool operator<(const String &lhs, const String &rhs) {
-        return lhs.compare(rhs) == Ordering::Less;
+        return lhs.compare(rhs) == vortex::Ordering::Less;
 }
 
 bool operator>(const String &lhs, const String &rhs) {
-        return lhs.compare(rhs) == Ordering::Greater;
+        return lhs.compare(rhs) == vortex::Ordering::Greater;
 }
 
 bool operator==(const String &lhs, const String &rhs) {
-        return lhs.compare(rhs) == Ordering::Equal;
+        return lhs.compare(rhs) == vortex::Ordering::Equal;
 }
 
 size_t String::hash() const {

@@ -7,7 +7,7 @@
 #include "vector.hpp"
 
 template <typename T>
-concept Key = Hashable<T> && Comparable<T>;
+concept Key = vortex::Hashable<T> && vortex::Equatable<T>;
 
 /// A simple key-value map structure. The type `K` must implement the
 /// `std::hash<K>` template specialization and is implied that the type can be
@@ -26,7 +26,7 @@ class HashMap {
        private:
         static constexpr size_t DEFAULT_BUCKETS = 16;
 
-        struct Entry : public Compare<Entry>, public Compare<K> {
+        struct Entry : public vortex::Compare<Entry>, public vortex::Compare<K> {
                private:
                 K key;
                 V value;
@@ -35,35 +35,36 @@ class HashMap {
                 Entry(K k, V v) : key(k), value(v) {
                 }
 
-                virtual Ordering compare(const Entry &other) const override {
+                virtual vortex::Ordering compare(const Entry &other) const override {
                         return key.compare(other.getKey());
                 }
 
-                virtual Ordering compare(const K &other) const override {
+                virtual vortex::Ordering compare(const K &other) const override {
                         return key.compare(other);
                 }
+
                 friend bool operator<(const Entry &lhs, const Entry &rhs) {
-                        return lhs.compare(rhs) == Ordering::Less;
+                        return lhs.compare(rhs) == vortex::Ordering::Less;
                 }
 
                 friend bool operator>(const Entry &lhs, const Entry &rhs) {
-                        return lhs.compare(rhs) == Ordering::Greater;
+                        return lhs.compare(rhs) == vortex::Ordering::Greater;
                 }
 
                 friend bool operator==(const Entry &lhs, const Entry &rhs) {
-                        return lhs.compare(rhs) == Ordering::Equal;
+                        return lhs.compare(rhs) == vortex::Ordering::Equal;
                 }
 
                 friend bool operator<(const Entry &lhs, const K &rhs) {
-                        return lhs.getKey().compare(rhs) == Ordering::Less;
+                        return lhs.getKey().compare(rhs) == vortex::Ordering::Less;
                 }
 
                 friend bool operator>(const Entry &lhs, const K &rhs) {
-                        return lhs.getKey().compare(rhs) == Ordering::Greater;
+                        return lhs.getKey().compare(rhs) == vortex::Ordering::Greater;
                 }
 
                 friend bool operator==(const Entry &lhs, const K &rhs) {
-                        return lhs.getKey().compare(rhs) == Ordering::Equal;
+                        return lhs.getKey().compare(rhs) == vortex::Ordering::Equal;
                 }
 
                 const K &getKey() const {
